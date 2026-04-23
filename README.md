@@ -29,6 +29,8 @@ Esta versão foi criada para oferecer:
 
 ### 1. Upload dos Arquivos
 Suba as pastas `system`, `catalog` e `admin` para a raiz da sua instalação OpenCart via FTP ou Gerenciador de Arquivos.
+[!IMPORTANT]
+**NÃO SUBIR A PASTA "UPLOAD":** Você deve subir apenas o **conteúdo** que está dentro da pasta upload para a raiz da sua loja.
 
 ### 2. Ativação e Modificação (OCMOD)
 Esta é a parte crucial para o funcionamento do link do boleto na página final:
