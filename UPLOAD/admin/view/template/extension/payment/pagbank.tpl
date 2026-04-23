@@ -18,6 +18,7 @@
     <div class="tab-content">
       <div class="tab-pane active" id="tab-config">
         <form action="<?php echo $action; ?>" method="post" id="form-pagbank" class="form-horizontal">
+          <input type="hidden" name="token" value="<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>" />
           <div class="form-group">
             <label class="col-sm-2 control-label">Módulo Geral</label>
             <div class="col-sm-10">
@@ -95,11 +96,11 @@
               <?php if ($transactions) { ?>
                 <?php foreach($transactions as $t) { ?>
                 <tr>
-                  <td>#<?php echo $t['order_id']; ?></td>
-                  <td><?php echo $t['charge_id']; ?></td>
-                  <td><span class="label label-info"><?php echo $t['status']; ?></span></td>
-                  <td><?php echo $t['date_added']; ?></td>
-                  <td class="text-right"><button onclick="checkNow('<?php echo $t['order_id']; ?>')" class="btn btn-warning btn-sm"><i class="fa fa-refresh"></i> Sincronizar</button></td>
+                  <td>#<?php echo htmlspecialchars($t['order_id'], ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td><?php echo htmlspecialchars($t['charge_id'], ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td><span class="label label-info"><?php echo htmlspecialchars($t['status'], ENT_QUOTES, 'UTF-8'); ?></span></td>
+                  <td><?php echo htmlspecialchars($t['date_added'], ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td class="text-right"><button onclick="checkNow('<?php echo htmlspecialchars($t['order_id'], ENT_QUOTES, 'UTF-8'); ?>')" class="btn btn-warning btn-sm"><i class="fa fa-refresh"></i> Sincronizar</button></td>
                 </tr>
                 <?php } ?>
               <?php } else { ?>
@@ -115,7 +116,7 @@
 <script>
 function checkNow(id) {
   $.ajax({
-    url: 'index.php?route=extension/payment/pagbank/checkStatus&token=<?php echo $token; ?>&order_id=' + id,
+    url: 'index.php?route=extension/payment/pagbank/checkStatus&token=<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>&order_id=' + id,
     dataType: 'json',
     success: function(json) { 
         if(json.success) alert(json.success); 

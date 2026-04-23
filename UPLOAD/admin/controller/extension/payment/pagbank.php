@@ -89,5 +89,13 @@ class ControllerExtensionPaymentPagBank extends Controller {
         $this->response->setOutput(json_encode($json));
     }
 
-    protected function validate() { return $this->user->hasPermission('modify', 'extension/payment/pagbank'); }
+    protected function validate() {
+        if (!$this->user->hasPermission('modify', 'extension/payment/pagbank')) {
+            return false;
+        }
+        if (!isset($this->request->post['token']) || $this->request->post['token'] != $this->session->data['token']) {
+            return false;
+        }
+        return true;
+    }
 }

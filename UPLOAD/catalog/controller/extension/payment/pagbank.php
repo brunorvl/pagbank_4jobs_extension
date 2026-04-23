@@ -366,8 +366,24 @@ class ControllerExtensionPaymentPagBank extends Controller {
 	*/
 	
     public function callback() {
+        // Verificar método HTTP
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit;
+        }
+
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
+
+        // Verificar assinatura do webhook (HMAC-SHA256)
+        $signature = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
+        $expected_signature = 'sha256=' . hash_hmac('sha256', $json, $this->config->get('pagbank_token'));
+        if (!hash_equals($signature, $expected_signature)) {
+            // Log tentativa inválida
+            $this->log->write('PagBank Webhook: Assinatura inválida. Recebida: ' . $signature . ' | Esperada: ' . $expected_signature);
+            http_response_code(401);
+            exit;
+        }
 
         if (isset($data['id']) && isset($data['reference_id'])) {
             $status = isset($data['charges'][0]['status']) ? $data['charges'][0]['status'] : '';
