@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>PagBank V4 4job Extension</name>
+    <code>pagbank_v4_4job_extension</code>
+    <version>1.0</version>
+    <author>Sua Loja</author>
+    <file path="admin/view/template/sale/order_info.tpl">
+        <operation>
+            <search><![CDATA[<div class="pull-right">]]></search>
+            <add position="after"><![CDATA[
+            <button type="button" id="btn-check-pagbank" data-toggle="tooltip" title="Sincronizar PagBank" class="btn btn-warning"><i class="fa fa-refresh"></i></button>
+            <script>
+            $('#btn-check-pagbank').on('click', function() {
+                $.ajax({
+                    url: 'index.php?route=extension/payment/pagbank/checkStatus&token=<?php echo $token; ?>&order_id=<?php echo $order_id; ?>',
+                    dataType: 'json',
+                    beforeSend: function() { $('#btn-check-pagbank i').addClass('fa-spin'); },
+                    complete: function() { $('#btn-check-pagbank i').removeClass('fa-spin'); },
+                    success: function(json) {
+                        if (json['success']) { alert(json['success']); location.reload(); }
+                        if (json['error']) { alert(json['error']); }
+                    }
+                });
+            });
+            </script>
+            ]]></add>
+        </operation>
+    </file>
+</modification>
