@@ -58,5 +58,7 @@ Antes de alternar para o modo **Produção**, o PagBank exige que você realize 
 
 > **Link Útil:** [Documentação de Homologação PagBank](https://dev.pagbank.uol.com.br/docs/homologacao)
 
+## ⚖️ Licença
+Este projeto está sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes. Você é livre para baixar, modificar e usar em seus projetos comerciais ou pessoais.
 ---
 # pagbank_4jobs_extension
