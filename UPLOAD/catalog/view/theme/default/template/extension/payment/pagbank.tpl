@@ -1,7 +1,3 @@
-
-<?php 
-if (preg_replace('/[^0-9]/', '', $order_full['custom_field'][3]) == "REMOVIDO"):
-?>
 <div class="well" id="pagbank-form">
     <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
     
@@ -218,7 +214,3 @@ $('#pb-confirm').on('click', function() {
     });
 });
 </script>
-<?php
-endif;
-
-?>
