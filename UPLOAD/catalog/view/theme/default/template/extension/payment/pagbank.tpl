@@ -12,7 +12,7 @@
 
     <div class="form-group col-md-6 required">
 		<label class="control-label">CPF do Titular</label>
-		<input type="text" id="pb-cpf" class="form-control" placeholder="000.000.000-00" value="<?php echo htmlspecialchars(preg_replace('/[^0-9]/', '', $order_full['custom_field'][3]), ENT_QUOTES, 'UTF-8'); ?>">
+		<input type="text" id="pb-cpf" class="form-control" placeholder="000.000.000-00" value="<?php echo !empty($tax_id) ? htmlspecialchars($tax_id, ENT_QUOTES, 'UTF-8') : (!empty($order_full['custom_field'][3]) ? htmlspecialchars(preg_replace('/[^0-9]/', '', $order_full['custom_field'][3]), ENT_QUOTES, 'UTF-8') : ''); ?>">
     </div>
 
     <div id="section-card" style="display: none;">

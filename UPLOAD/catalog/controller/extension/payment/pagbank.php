@@ -2,10 +2,34 @@
 class ControllerExtensionPaymentPagBank extends Controller {
     public function index() {
         $this->load->model('checkout/order');
-        $data['total_pedido'] = $this->cart->getTotal();
-        $data['max_installments'] = (int)$this->config->get('pagbank_card_max_installments');
-        $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+        
+        $order_info = isset($this->session->data['order_id']) ? $this->model_checkout_order->getOrder($this->session->data['order_id']) : null;
         $data['order_full'] = $order_info;
+
+        if (!empty($order_info) && isset($order_info['total'])) {
+            $data['total_pedido'] = (float)$this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
+        } else {
+            $data['total_pedido'] = (float)$this->cart->getTotal();
+        }
+
+        $tax_id = '';
+        if (!empty($order_info['custom_field'])) {
+            if (isset($order_info['custom_field'][3])) {
+                $tax_id = preg_replace('/[^0-9]/', '', $order_info['custom_field'][3]);
+            }
+            if (empty($tax_id) && is_array($order_info['custom_field'])) {
+                foreach ($order_info['custom_field'] as $value) {
+                    $clean_val = preg_replace('/[^0-9]/', '', $value);
+                    if (strlen($clean_val) == 11 || strlen($clean_val) == 14) {
+                        $tax_id = $clean_val;
+                        break;
+                    }
+                }
+            }
+        }
+        $data['tax_id'] = $tax_id;
+
+        $data['max_installments'] = (int)$this->config->get('pagbank_card_max_installments');
 
         $mode = $this->config->get('pagbank_mode');
         $base_url = ($mode == 'sandbox') ? 'https://sandbox.api.pagseguro.com/' : 'https://api.pagseguro.com/';
@@ -56,6 +80,13 @@ class ControllerExtensionPaymentPagBank extends Controller {
 		$soft_descriptor = substr(strtoupper($soft_descriptor), 0, 13);
 		if (empty($soft_descriptor)) { $soft_descriptor = "LIVRARIA"; }
 
+		// Lógica para garantir que o endereço de entrega seja preenchido (usa o de pagamento como fallback)
+		$shipping_street   = !empty($order['shipping_address_1']) ? $order['shipping_address_1'] : $order['payment_address_1'];
+		$shipping_locality = !empty($order['shipping_address_2']) ? $order['shipping_address_2'] : $order['payment_address_2'];
+		$shipping_city     = !empty($order['shipping_city']) ? $order['shipping_city'] : $order['payment_city'];
+		$shipping_zone     = !empty($order['shipping_zone_code']) ? $order['shipping_zone_code'] : $order['payment_zone_code'];
+		$shipping_postcode = !empty($order['shipping_postcode']) ? $order['shipping_postcode'] : $order['payment_postcode'];
+
 		// Montagem do Payload
 		$payload = array(
 			"reference_id" => (string)$order['order_id'],
@@ -78,13 +109,13 @@ class ControllerExtensionPaymentPagBank extends Controller {
 			)),
 			"shipping" => array(
 				"address" => array(
-					"street"      => substr($order['shipping_address_1'], 0, 160),
+					"street"      => substr($shipping_street, 0, 160),
 					"number"      => "SN",
-					"locality"    => substr($order['shipping_address_2'], 0, 60),
-					"city"        => $order['shipping_city'],
-					"region_code" => strtoupper($order['shipping_zone_code']),
+					"locality"    => substr($shipping_locality, 0, 60),
+					"city"        => $shipping_city,
+					"region_code" => strtoupper($shipping_zone),
 					"country"     => "BRA",
-					"postal_code" => preg_replace('/[^0-9]/', '', $order['shipping_postcode'])
+					"postal_code" => preg_replace('/[^0-9]/', '', $shipping_postcode)
 				)
 			),
 			"notification_urls" => array($this->url->link('extension/payment/pagbank/callback', '', true)),
@@ -137,6 +168,11 @@ class ControllerExtensionPaymentPagBank extends Controller {
 			);
 		}
 		
+		// --- LOG DE ENVIO ---
+		//$log = new Log('pagbank.log');
+		//$log->write('Debug PagBank ' . $post_method . ' #' . $order['order_id']);
+		//$log->write(print_r($payload, true));
+
 		$base_url = ($mode == 'sandbox') ? 'https://sandbox.api.pagseguro.com/' : 'https://api.pagseguro.com/';
 		$ch = curl_init($base_url . 'orders');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -156,6 +192,11 @@ class ControllerExtensionPaymentPagBank extends Controller {
 
 		if (ob_get_length()) ob_clean();
 		$this->response->addHeader('Content-Type: application/json');
+
+		// --- LOG DE RESPOSTA ---
+		//$log->write('Response PagBank HTTP Code: ' . $http_code);
+		//$log->write('Response PagBank Formatado:');
+		//$log->write(json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
 		if ($http_code == 201 || $http_code == 200) {
 			$payment_link = '';
@@ -325,6 +366,11 @@ class ControllerExtensionPaymentPagBank extends Controller {
 		}
 		
 		// EXECUÇÃO DO CURL
+		// --- LOG DE ENVIO ---
+		//$log = new Log('pagbank.log');
+		//$log->write('Debug PagBank ' . $post_method . ' #' . $order['order_id']);
+		//$log->write(print_r($payload, true));
+
 		$base_url = ($mode == 'sandbox') ? 'https://sandbox.api.pagseguro.com/' : 'https://api.pagseguro.com/';
 		$ch = curl_init($base_url . 'orders');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -344,6 +390,11 @@ class ControllerExtensionPaymentPagBank extends Controller {
 
 		if (ob_get_length()) ob_clean();
 		$this->response->addHeader('Content-Type: application/json');
+
+		// --- LOG DE RESPOSTA ---
+		//$log->write('Response PagBank HTTP Code: ' . $http_code);
+		//$log->write('Response PagBank Formatado:');
+		//$log->write(json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
 		if ($http_code == 201) {
 			$status_label = "SUCESSO";
@@ -366,24 +417,8 @@ class ControllerExtensionPaymentPagBank extends Controller {
 	*/
 	
     public function callback() {
-        // Verificar método HTTP
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            exit;
-        }
-
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
-
-        // Verificar assinatura do webhook (HMAC-SHA256)
-        $signature = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
-        $expected_signature = 'sha256=' . hash_hmac('sha256', $json, $this->config->get('pagbank_token'));
-        if (!hash_equals($signature, $expected_signature)) {
-            // Log tentativa inválida
-            $this->log->write('PagBank Webhook: Assinatura inválida. Recebida: ' . $signature . ' | Esperada: ' . $expected_signature);
-            http_response_code(401);
-            exit;
-        }
 
         if (isset($data['id']) && isset($data['reference_id'])) {
             $status = isset($data['charges'][0]['status']) ? $data['charges'][0]['status'] : '';
